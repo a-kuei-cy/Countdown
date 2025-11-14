@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>倒數計時器 + 聲音 + 瘋狂閃爍</title>
+  <style>
+    body{font-family:Arial;background:#000;color:#0f0;text-align:center;padding-top:10vh;}
+    #counter{font-size:15vw;font-weight:bold;text-shadow:0 0 30px #0f0;transition:all 0.1s;}
+    input,button{margin:10px;padding:15px;font-size:2em;background:#111;color:#0f0;border:2px solid #0f0;border-radius:10px;}
+    button:hover{background:#0f0;color:#000;}
+    .alarm{animation:flash 0.3s infinite;}
+    @keyframes flash{
+      0%,100%{color:#f00;text-shadow:0 0 60px #f00;transform:scale(1.6);}
+      50%{color:#ff0;text-shadow:0 0 80px #ff0;transform:scale(1.4);}
+    }
+  </style>
+</head>
+<body>
+  <h1>倒數計時器（到時瘋狂閃爍＋響鈴）</h1>
+  <input type="number" id="seconds" placeholder="輸入秒數" min="1"><br>
+  <button onclick="setCountdown()">設定</button>
+  <button onclick="start()">開始</button>
+  <button onclick="stop()">暫停</button>
+  <button onclick="reset()">重置</button>
+  
+  <div id="counter">00:00</div>
+
+  <script>
+    let timer = null, remain = 0, alarming = false;
+    const el = document.getElementById('counter');
+
+    // 響鈴
+    function beep(){const ctx=new AudioContext();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=900;o.type="square";g.gain.setValueAtTime(0.4,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.4);o.start();o.stop(ctx.currentTime+0.4);}
+
+    function playAlarm(){for(let i=0;i<8;i++)setTimeout(beep, i*300);}
+
+    function format(sec){
+      let m=Math.floor(sec/60).toString().padStart(2,'0');
+      let s=(sec%60).toString().padStart(2,'0');
+      return `${m}:${s}`;
+    }
+
+    function tick(){
+      if(remain<=0){
+        stop();
+        alarming=true;
+        el.classList.add('alarm');
+        el.textContent="00:00";
+        playAlarm();
+        return;
+      }
+      remain--;
+      el.textContent=format(remain);
+      el.style.transform='scale(1.15)';
+      setTimeout(()=>el.style.transform='scale(1)',150);
+    }
+
+    window.setCountdown=function(){
+      let v=parseInt(document.getElementById('seconds').value)||0;
+      if(v>0){remain=v;el.textContent=format(remain);el.style.color='#0f0';el.classList.remove('alarm');el.style.transform='scale(1)';alarming=false;}
+    }
+
+    window.start=function(){
+      if(timer||remain<=0||alarming)return;
+      timer=setInterval(tick,1000);
+    }
+
+    window.stop=function(){
+      clearInterval(timer);timer=null;
+    }
+
+    window.reset=function(){
+      stop();alarming=false;
+      el.textContent=format(remain);
+      el.classList.remove('alarm');
+      el.style.color='#0f0';
+      el.style.transform='scale(1)';
+    }
+  </script>
+</body>
+</html>
